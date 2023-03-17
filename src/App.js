@@ -73,7 +73,7 @@ export default function App() {
           renderInput={(params) => <TextField {...params} label="Camera Meta-Data" onChange={(e) => handleInputChange(e)} />}
         />
       </div>
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} hidden >
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <TableHead>
             <TableRow>

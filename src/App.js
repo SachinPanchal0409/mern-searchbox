@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, {useState, useEffect} from "react";
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import "./styles.css";
@@ -13,6 +13,8 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
 
+const baseUrl = "https://mern-searchbox-server.onrender.com";
+
 // For Dropdow
 // const OPTION = [
 //   { Id:"1", name: "Camera 1 - Sony Cybershot", VideoDevice:"172.15.16.1" },
@@ -23,12 +25,12 @@ import Paper from '@mui/material/Paper';
 //   { Id:"6", name: "Camera 6 - Samsung", VideoDevice:"36.15.16.1" }
 // ];
 
-const OPTION = [];
-fetch("https://jsonplaceholder.typicode.com/comments").then(res => res.json()).then(data => {
-  data.forEach(dataItem => {
-    OPTION.push(dataItem)
-  })
-});
+// const OPTION = [];
+// fetch("https://jsonplaceholder.typicode.com/comments").then(res => res.json()).then(data => {
+//   data.forEach(dataItem => {
+//     OPTION.push(dataItem)
+//   })
+// });
 
 // const OPTION = [
 //   { label: 'The Shawshank Redemption', year: 1994 },
@@ -45,13 +47,16 @@ fetch("https://jsonplaceholder.typicode.com/comments").then(res => res.json()).t
 
 export default function App() {
 
-  //const [OPTION, setAllOption] = useState(options || []);
-
-
+  const [option, setAllOption] = useState([]);
 
 
   const handleInputChange = (e) => {
     // node API call for auto search option from database
+
+    fetch(`${baseUrl}/emails/search?text=${e.target.value}`).then(res => res.json()).then(data => {
+      setAllOption(data);
+    });
+
     console.log(e.target.value)
   }
   const handleValueChange = (event, value) => {
@@ -66,7 +71,7 @@ export default function App() {
         <Autocomplete
           disablePortal          
           id="combo-box-demo"
-          options={OPTION}
+          options={option}
           getOptionLabel={(item) => item.email}
           sx={{ width: 500 }}
           onChange={(event, value) => handleValueChange(event, value)}
@@ -85,7 +90,7 @@ export default function App() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {OPTION.map((row) => (
+            {option.map((row) => (
               <TableRow
                 key={row.Id}
                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}

@@ -15,8 +15,9 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import jsonData from './ConvertedNew.json';
+// import jsonData from './ConvertedNew.json';
 import CircularProgress from '@mui/material/CircularProgress';
+import LinearProgress from '@mui/material/LinearProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 
@@ -34,6 +35,7 @@ export default function App() {
   const [tableData, setAlltableData] = useState([]);
   const [dense, setDense] = React.useState(false);
   let loading = false;
+  let tableDataLoading = true;
   const initialState = [];
 
   const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,39 +49,43 @@ export default function App() {
       setAlltableData(initialState);
     }
     else {
-      // fetch(`${baseUrl}/emails/search?text=${e.target.value}`).then(res => res.json()).then(data => {
-      //   setAllOption(data);
-      // }); 
-      // var t = jsonData.Events.filter((item) => {
-      //   return item.EventTopic.toString().toLowerCase().includes(e.target.value.toLowerCase());     
-      // });
-      // setAllOption(t);
-
       // this for progress
-    (async () => {
-        loading = true;
-
-        await sleep(200); // For demo purposes.
-         
-        var t = jsonData.Events.filter((item) => {
-        return item.EventTopic.toString().toLowerCase().includes(e.target.value.toLowerCase());     
-      });
-      setAllOption(t);
-      loading = false;       
-      })();      
+      try {
+        (async () => {
+          loading = true;          
+          //await sleep(200); // For demo purposes.         
+          var resultData = await fetch(`${baseUrl}/emails/camera/search?text=${e.target.value}`).then(res => res.json());
+          setAllOption(resultData);
+          loading = false;
+        })();
+      }
+      catch (error) {
+        // TypeError: Failed to fetch
+        console.log('There was an error', error);
+        loading = false;
+      }
     }
   }
 
   const handleValueChange = (event, option) => {
     if (option != null) {
-      // fetch(`${baseUrl}/emails/search?text=${option.email}`).then(res => res.json()).then(data => {
-      //   setAlltableData(data);
-      // });
-      var t = jsonData.Events.filter((item) => {
-        return item.EventTopic.toString().toLowerCase().includes(option.EventTopic.toString().toLowerCase());
-      });
-      setAlltableData(t);
-
+      try {
+        (async () => {
+          tableDataLoading = true;
+          var url = `${baseUrl}/emails/camera/search?text=${option.SeqNo}`;
+          console.log(url);
+          await fetch(url).then(res => res.json())
+            .then(data => {
+              setAlltableData(data);
+            });
+            tableDataLoading = false;
+        })();
+      }
+      catch (error) {
+        // TypeError: Failed to fetch
+        console.log('There was an error', error);
+        tableDataLoading = false;
+      }
     }
     else {
       setAlltableData(initialState);
@@ -105,34 +111,34 @@ export default function App() {
         <Autocomplete
           disablePortal
           freeSolo
-          id="combo-box-demo"          
+          id="combo-box-demo"
           options={option}
           filterOptions={(option) => option}
           getOptionLabel={(option) => option.EventTopic}
           sx={{ width: 500 }}
-          loading={loading}          
+          loading={loading}
           popupIcon={<SearchIcon style={{ cursor: "pointer" }} />}
           onChange={(event, value) => handleValueChange(event, value)}
           renderOption={(props, option) => (
             <Card {...props} sx={{ minWidth: 275 }} style={{ padding: "0px", border: "none", boxShadow: "initial" }}>
-              <CardContent align="Left" style={{ padding: "10px", borderBottom:"2px"}}>
+              <CardContent align="Left" style={{ padding: "10px", borderBottom: "2px" }}>
                 <div class="left">
-                <Typography variant="h8">
-                  <span> {'Category :'} {option.Category}</span>
-                </Typography>
-                </div>               
+                  <Typography variant="h8">
+                    <span> {'Category :'} {option.Category}</span>
+                  </Typography>
+                </div>
 
                 <div class="right">
-                <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                  <span> {'Sequence No :'} {option.SeqNo}</span>
-                </Typography>
-                </div>                              
-                
+                  <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                    <span> {'Sequence No :'} {option.SeqNo}</span>
+                  </Typography>
+                </div>
+
                 <Typography variant="body2" >
                   <span> {'Event Topic :'} {option.EventTopic}</span>
                 </Typography>
                 <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                <span> {'TimeStamp :'} {option.TimeStamp}</span>
+                  <span> {'TimeStamp :'} {option.TimeStamp}</span>
                 </Typography>
               </CardContent>
             </Card>
@@ -144,7 +150,7 @@ export default function App() {
               startAdornment: (
                 <InputAdornment position="start"><SearchIcon style={{ cursor: "pointer" }} />
                 </InputAdornment>
-              ), 
+              ),
               // this is for progress
               endAdornment: (
                 <React.Fragment>
@@ -163,9 +169,9 @@ export default function App() {
             }
           }}
         />
-      </div>     
+      </div>
       <FormControlLabel
-      style={{float:"right",fontSize:"" }}
+        style={{ float: "right", fontSize: "" }}
         control={<Switch checked={dense} onChange={handleChangeDense} />}
         label="Dense padding"
       />
@@ -176,23 +182,24 @@ export default function App() {
               <TableCell align="left">Seq&nbsp;No</TableCell>
               <TableCell align="left">Category</TableCell>
               <TableCell align="left">TimeStamp</TableCell>
-              <TableCell align="left">Event&nbsp;Topic</TableCell>
+              <TableCell align="left">Event&nbsp;Topic</TableCell>              
             </TableRow>
-          </TableHead>
-          <TableBody>
+          </TableHead>          
+          <TableBody>           
             {tableData.map((element, row) => (
               <TableRow
-                key={row.Id}
+                key={row._Id}
                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell align="left">{element.SeqNo}</TableCell>
                 <TableCell align="left">{element.Category}</TableCell>
                 <TableCell align="left">{element.TimeStamp}</TableCell>
-                <TableCell align="left">{element.EventTopic}</TableCell>
+                <TableCell align="left">{element.EventTopic}</TableCell>                
               </TableRow>
-            ))}
+            ))
+            }             
           </TableBody>
         </Table>
-      </TableContainer>      
+      </TableContainer>                 
     </div>
   );
 }

@@ -21,7 +21,8 @@ import LinearProgress from '@mui/material/LinearProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import moment from 'moment'
+import ArrowCircleUpIcon from '@mui/icons-material/ArrowCircleUp';
+import Tooltip from '@mui/material/Tooltip';
 const baseUrl = "https://mern-autosearchbox-server.onrender.com/camera";
 
 
@@ -30,11 +31,13 @@ function sleep(delay = 0) {
     setTimeout(resolve, delay);
   });
 }
+
 const THEME = createTheme({
   typography: {
     "fontFamily": `"Segoe UI"`
   }
 });
+
 
 export default function App() {
   const [option, setAllOption] = useState([]);
@@ -59,17 +62,34 @@ export default function App() {
       // this for progress
       try {
         (async () => {
-          loading = true;          
+          loading = true;
           //await sleep(10000); // For demo purposes.         
           var resultData = await fetch(`${baseUrl}/search?text=${e.target.value}`).then(res => res.json());
+          //var resultData = await fetch(`${baseUrl}/search?text=1678826690175`).then(res => res.json());
+
+          resultData?.forEach((element) =>  {               
+
+            element.Info?.forEach((subelement) => {            
+            
+              if (subelement.length > 0)              
+            {
+              var result = subelement.find(({ Name }) => Name === "capture_timestamp");
+              if (result != null) {
+                element.capture_timestamp = result.Value;
+              }              
+            }                    
+          });
+
+          });
           setAllOption(resultData);
+
         })();
       }
       catch (error) {
         // TypeError: Failed to fetch
         console.log('There was an error', error);
       } finally {
-        loading = false;          
+        loading = false;
       }
     }
   }
@@ -81,12 +101,6 @@ export default function App() {
           tableDataLoading = true;
 
           var url = `${baseUrl}/topic`;
-          // await fetch(url).then(res => res.json())
-          //   .then(data => {
-          //     setAlltableData(data);
-          //   });
-
-          //body
           const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -133,6 +147,47 @@ export default function App() {
       onChange={(e) => handleInputChange(e)} />)
   }
 
+  const ScrollButton = () => {
+
+    const [visible, setVisible] = useState(false)
+
+    const toggleVisible = () => {
+      const scrolled = document.documentElement.scrollTop;
+      if (scrolled > 300) {
+        setVisible(true)
+      }
+      else if (scrolled <= 300) {
+        setVisible(false)
+      }
+    };
+
+    const scrollToTop = () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+        /* you can also use 'auto' behaviour
+            in place of 'smooth' */
+      });
+    };
+
+    window.addEventListener('scroll', toggleVisible);
+
+    return (
+      <ArrowCircleUpIcon
+        style={{
+          fontSize: "48px",
+          color: "gray",
+          position: "fixed",
+          bottom: 10,
+          right: 10,
+          display: visible ? "block" : "none"
+        }}
+        onClick={scrollToTop}>
+
+      </ArrowCircleUpIcon>
+    );
+  }
+
   return (
     <ThemeProvider theme={THEME}>
       <div className="App">
@@ -146,7 +201,7 @@ export default function App() {
           </div>
 
           <div style={{ paddingTop: "10px", margin: "auto", width: "75%" }} >
-            <p><b>Auto Searchbox &#40;PoC&#41; </b></p>
+            <p><b>Global Search PoC</b></p>
           </div>
         </div>
 
@@ -181,14 +236,16 @@ export default function App() {
                       <span> {'Event Topic :'} {option.EventTopic}</span>
                     </Typography>
                     <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                      <span> {'TimeStamp :'} {new Date(option.TimeStamp).toUTCString()}</span>
-                    </Typography>
+                      <span> {'Timestamp :'} {new Date(option.TimeStamp).toUTCString()}</span>
+                    </Typography>                    
+                    {option.capture_timestamp && (<Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+                      <span> {'Capture Timestamp:'} {option.capture_timestamp}</span>
+                    </Typography>)}                    
                   </CardContent>
                 </Card>
               )}
 
               renderInput={(params) => renderInput(params)}
-
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                   // Prevent's default 'Enter' behavior.
@@ -209,7 +266,7 @@ export default function App() {
                 <TableRow>
                   <TableCell align="left">Seq&nbsp;No</TableCell>
                   <TableCell align="left">Category</TableCell>
-                  <TableCell align="left">TimeStamp</TableCell>
+                  <TableCell align="left">Timestamp</TableCell>
                   <TableCell align="left">Event&nbsp;Topic</TableCell>
                 </TableRow>
               </TableHead>
@@ -231,6 +288,9 @@ export default function App() {
           {/* {tableDataLoading ? <LinearProgress/> : null}           */}
         </div>
       </div>
+      <Tooltip title="Scroll to top">
+        <ScrollButton />
+      </Tooltip>
     </ThemeProvider>
   );
 }

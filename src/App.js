@@ -15,6 +15,11 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
+import Collapse from '@mui/material/Collapse';
+import IconButton from '@mui/material/IconButton';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 // import jsonData from './ConvertedNew.json';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -44,14 +49,14 @@ export default function App() {
   const [tableData, setAlltableData] = useState([]);
   const [dense, setDense] = React.useState(false);
   let loading = false;
-  let tableDataLoading = true;
+  let tableDataLoading = false;
   const initialState = [];
 
 
   const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDense(event.target.checked);
   };
-
+ 
   const handleInputChange = (e) => {
     // node API call for auto search option from database    
     setAllOption(initialState);
@@ -67,18 +72,17 @@ export default function App() {
           var resultData = await fetch(`${baseUrl}/search?text=${e.target.value}`).then(res => res.json());
           //var resultData = await fetch(`${baseUrl}/search?text=1678826690175`).then(res => res.json());
 
-          resultData?.forEach((element) =>  {               
+          resultData?.forEach((element) => {
 
-            element.Info?.forEach((subelement) => {            
-            
-              if (subelement.length > 0)              
-            {
-              var result = subelement.find(({ Name }) => Name === "capture_timestamp");
-              if (result != null) {
-                element.capture_timestamp = result.Value;
-              }              
-            }                    
-          });
+            element.Info?.forEach((subelement) => {
+
+              if (subelement.length > 0) {
+                var result = subelement.find(({ Name }) => Name === "capture_timestamp");
+                if (result != null) {
+                  element.capture_timestamp = result.Value;
+                }
+              }
+            });
 
           });
           setAllOption(resultData);
@@ -147,6 +151,55 @@ export default function App() {
       onChange={(e) => handleInputChange(e)} />)
   }
 
+  function Row(props) {
+    const { row } = props;
+    const [open, setOpen] = React.useState(false);
+
+    return (
+      <React.Fragment>
+        <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+          <TableCell>
+          <Tooltip  title="Show more" placement="right" arrow>
+            <IconButton
+              aria-label="expand row"
+              size="small"
+              onClick={() => setOpen(!open)}
+            >
+              {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+            </IconButton>
+            </Tooltip>
+          </TableCell>
+
+          <TableCell align="left">{row.SeqNo}</TableCell>
+          <TableCell align="left">{row.Category}</TableCell>
+          <TableCell align="left">{new Date(row.TimeStamp).toUTCString()}</TableCell>
+          <TableCell align="left">{row.EventTopic}</TableCell>
+          <TableCell align="left">{row.PropertyOperation}</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+            <Collapse in={open} timeout="auto" unmountOnExit>
+              <Box sx={{ margin: 1 }}>
+                <Typography gutterBottom component="div">
+                  <b>More Information</b>
+                </Typography>
+                <ul class="ulList">
+                  {row.Info.map((InfoRow) =>
+                  (
+                    InfoRow.length > 0
+                      ? InfoRow.map((subRowData) => (
+                        <li> <b>{subRowData.Name + ": "}</b> {subRowData.Value}</li>))
+                      : <li> <b>{InfoRow.Name + ": "}</b> {InfoRow.Value}</li>
+                  ))}
+                </ul>
+              </Box>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      </React.Fragment>
+    );
+  }
+
   const ScrollButton = () => {
 
     const [visible, setVisible] = useState(false)
@@ -173,18 +226,20 @@ export default function App() {
     window.addEventListener('scroll', toggleVisible);
 
     return (
-      <ArrowCircleUpIcon
+      <Tooltip title="Scroll to top">        
+      <ArrowCircleUpIcon        
+        cursor="pointer"
         style={{
           fontSize: "48px",
           color: "gray",
           position: "fixed",
-          bottom: 10,
-          right: 10,
+          bottom: 15,
+          right: 15,
           display: visible ? "block" : "none"
         }}
         onClick={scrollToTop}>
-
       </ArrowCircleUpIcon>
+      </Tooltip>
     );
   }
 
@@ -237,10 +292,10 @@ export default function App() {
                     </Typography>
                     <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                       <span> {'Timestamp :'} {new Date(option.TimeStamp).toUTCString()}</span>
-                    </Typography>                    
+                    </Typography>
                     {option.capture_timestamp && (<Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                       <span> {'Capture Timestamp:'} {option.capture_timestamp}</span>
-                    </Typography>)}                    
+                    </Typography>)}
                   </CardContent>
                 </Card>
               )}
@@ -259,38 +314,30 @@ export default function App() {
             style={{ float: "right", fontSize: "" }}
             control={<Switch checked={dense} onChange={handleChangeDense} />}
             label="Dense padding"
-          />
-          <TableContainer component={Paper} >
-            <Table sx={{ minWidth: 650 }} size={dense ? 'small' : 'medium'} aria-label="meta-data table">
+          />                    
+          <TableContainer component={Paper}>
+            <Table aria-label="collapsible table" size={dense ? 'small' : 'medium'} >
               <TableHead>
                 <TableRow>
+                  <TableCell />
                   <TableCell align="left">Seq&nbsp;No</TableCell>
                   <TableCell align="left">Category</TableCell>
                   <TableCell align="left">Timestamp</TableCell>
                   <TableCell align="left">Event&nbsp;Topic</TableCell>
+                  <TableCell align="left">Property&nbsp;Operation</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tableData.map((element, row) => (
-                  <TableRow
-                    key={element._id}
-                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                    <TableCell align="left">{element.SeqNo}</TableCell>
-                    <TableCell align="left">{element.Category}</TableCell>
-                    <TableCell align="left">{new Date(element.TimeStamp).toUTCString()}</TableCell>
-                    <TableCell align="left">{element.EventTopic}</TableCell>
-                  </TableRow>
-                ))
-                }
+                {tableData.map((row) => (
+                  <Row key={row._id} row={row} />
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
-          {/* {tableDataLoading ? <LinearProgress/> : null}           */}
+          {tableDataLoading ? <LinearProgress /> : null}
         </div>
       </div>
-      <Tooltip title="Scroll to top">
-        <ScrollButton />
-      </Tooltip>
+      <ScrollButton />
     </ThemeProvider>
   );
 }

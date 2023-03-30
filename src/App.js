@@ -48,15 +48,15 @@ export default function App() {
   const [option, setAllOption] = useState([]);
   const [tableData, setAlltableData] = useState([]);
   const [dense, setDense] = React.useState(false);
-  let loading = false;
-  let tableDataLoading = false;
+  const [loading, setLoading] = useState(false);
+  const [tableDataLoading, settableDataLoading] = useState(false);  
   const initialState = [];
 
 
   const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDense(event.target.checked);
   };
- 
+  
   const handleInputChange = (e) => {
     // node API call for auto search option from database    
     setAllOption(initialState);
@@ -67,11 +67,10 @@ export default function App() {
       // this for progress
       try {
         (async () => {
-          loading = true;
-          //await sleep(10000); // For demo purposes.         
+          setLoading(true);          
+          //await sleep(1000); // For demo purposes.         
           var resultData = await fetch(`${baseUrl}/search?text=${e.target.value}`).then(res => res.json());
-          //var resultData = await fetch(`${baseUrl}/search?text=1678826690175`).then(res => res.json());
-
+          
           resultData?.forEach((element) => {
 
             element.Info?.forEach((subelement) => {
@@ -86,14 +85,13 @@ export default function App() {
 
           });
           setAllOption(resultData);
-
+          setLoading(false);          
         })();
       }
       catch (error) {
         // TypeError: Failed to fetch
         console.log('There was an error', error);
-      } finally {
-        loading = false;
+        setLoading(false);
       }
     }
   }
@@ -102,7 +100,7 @@ export default function App() {
     if (option != null) {
       try {
         (async () => {
-          tableDataLoading = true;
+          settableDataLoading(true);
 
           var url = `${baseUrl}/topic`;
           const requestOptions = {
@@ -117,13 +115,13 @@ export default function App() {
               setAlltableData(data);
             });
 
-          tableDataLoading = false;
+            settableDataLoading(false);
         })();
       }
       catch (error) {
         // TypeError: Failed to fetch
         console.log('There was an error', error);
-        tableDataLoading = false;
+        settableDataLoading(false);
       }
     }
     else {
@@ -188,8 +186,8 @@ export default function App() {
                   (
                     InfoRow.length > 0
                       ? InfoRow.map((subRowData) => (
-                        <li> <b>{subRowData.Name + ": "}</b> {subRowData.Value}</li>))
-                      : <li> <b>{InfoRow.Name + ": "}</b> {InfoRow.Value}</li>
+                        <li key={row._id}> <b>{subRowData.Name + ": "}</b> {subRowData.Value}</li>))
+                      : <li key={row._id}> <b>{InfoRow.Name + ": "}</b> {InfoRow.Value}</li>
                   ))}
                 </ul>
               </Box>
